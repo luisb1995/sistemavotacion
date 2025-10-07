@@ -18,22 +18,22 @@ export default function layout({ children }) {
     return (
          <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-900 text-white p-6">
+      <aside className="w-64 bg-gray-900 text-white p-6 ">
         <h2 className="text-2xl font-bold mb-8">Dashboard</h2>
-        <nav className="space-y-4">
-          <Link href="/dashboard" className="block hover:text-gray-300">
+        <nav className="space-y-6 text-lg">
+          <Link href="/dashboard" className="block hover:text-gray-300 border-b-2 border-cyan-700 pb-2">
             Inicio
           </Link>
           <Link
             href="/dashboard/votaciones"
-            className="block hover:text-gray-300"
+            className="block hover:text-gray-300  border-b-2 border-cyan-700 pb-2"
           >
             Votaciones
           </Link>
           {role === "admin" && (
             <Link
-              href="/dashboard/crear-votacion"
-              className="block hover:text-gray-300"
+              href="/dashboard/crearvotacion"
+              className="block hover:text-gray-300  border-b-2 border-cyan-700 pb-2"
             >
               Crear Votación
             </Link>
@@ -60,20 +60,6 @@ export default function layout({ children }) {
 
             {openMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
-                <Link
-                  href="/dashboard/perfil"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  onClick={() => setOpenMenu(false)}
-                >
-                  Perfil
-                </Link>
-                <Link
-                  href="/dashboard/configuracion"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  onClick={() => setOpenMenu(false)}
-                >
-                  Configuración
-                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
