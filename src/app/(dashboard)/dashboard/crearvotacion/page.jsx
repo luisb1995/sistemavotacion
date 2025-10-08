@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from 'next/navigation';
 import { votingService } from '@/lib/servicevoting';
 import {loadElections } from '@/helpers/loadElections';
+import Swal from 'sweetalert2';
 
 export default function Page() {
   const pathname = usePathname();
@@ -35,7 +36,12 @@ export default function Page() {
   // 🔹 Crear elección
   async function handleCreateElection() {
     if (!newElection.title || !newElection.description || !newElection.tiempo) {
-      alert("⚠️ Debes ingresar título, descripción y duración");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Faltan datos',
+        text: 'Por favor, completa todos los campos de la nueva votación.',
+      });
+
       return;
     }
 
@@ -44,7 +50,11 @@ export default function Page() {
       (c) => c.name.trim() && c.description.trim()
     );
     if (validCandidates.length < 2) {
-      alert("⚠️ Debes agregar al menos 2 candidatos válidos");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Al menos 2 candidatos',
+        text: 'Debes agregar al menos 2 candidatos válidos con nombre y descripción.',
+      });
       return;
     }
 
@@ -53,7 +63,12 @@ export default function Page() {
       const network = await provider.getNetwork();
 
       if (network.chainId !== 31337) {
-        alert("Por favor, cambia a la red Hardhat Local");
+        Swal.fire({
+          icon: 'error',
+          title: 'Red incorrecta',
+          text: 'Por favor, cambia a la red Hardhat Local (chainId 31337) en MetaMask.',
+        });
+
         return;
       }
 
@@ -71,7 +86,11 @@ export default function Page() {
       const event = receipt.events.find(e => e.event === "ElectionCreated");
       const newElectionId = event?.args?.electionId.toNumber();
 
-      alert(`✅ Elección creada con éxito! ID: ${newElectionId}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Elección creada',
+        text: `La votación se creó con éxito! ID: ${newElectionId}`,
+      });
 
       // ✅ Añadir los candidatos automáticamente
       for (const candidate of validCandidates) {
@@ -83,15 +102,22 @@ export default function Page() {
         await txAdd.wait();
       }
 
-      alert("✅ Candidatos añadidos con éxito!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Candidatos añadidos',
+        text: 'Los candidatos se añadieron con éxito a la votación.',
+      });
 
       setInitialCandidates([{ name: '', description: '' }, { name: '', description: '' }]);
       setNewElection({ title: '', description: '', tiempo: '' });
 
       await handleLoadElections();
     } catch (error) {
-      console.error("Error:", error);
-      alert("Error: " + error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `Hubo un error al crear la votación: ${error.message}`,
+      });
     } finally {
       setIsCreating(false);
     }
@@ -101,7 +127,11 @@ export default function Page() {
   async function handleAddCandidate(electionId) {
     try {
       if (!electionId) {
-        alert("⚠️ Primero selecciona o crea una elección");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Elección no seleccionada',
+          text: 'Primero selecciona o crea una elección antes de añadir candidatos.',
+        });
         return;
       }
 
@@ -109,7 +139,11 @@ export default function Page() {
       const network = await provider.getNetwork();
 
       if (network.chainId !== 31337) {
-        alert("Por favor, cambia a la red Hardhat Local");
+        Swal.fire({
+          icon: 'error',
+          title: 'Red incorrecta',
+          text: 'Por favor, cambia a la red Hardhat Local (chainId 31337) en MetaMask.',
+        });
         return;
       }
 
@@ -128,8 +162,11 @@ export default function Page() {
       setNewCandidate({ name: '', description: '' });
 
     } catch (error) {
-      console.error("Error detallado al añadir candidato:", error);
-      alert("Error al añadir candidato: " + error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `Hubo un error al añadir el candidato: ${error.message}`,
+      });
     } finally {
       setIsAddingCandidate(false);
     }
@@ -142,20 +179,31 @@ export default function Page() {
       const network = await provider.getNetwork();
 
       if (network.chainId !== 31337) {
-        alert("Por favor, cambia a la red Hardhat Local");
+        Swal.fire({
+          icon: 'error',
+          title: 'Red incorrecta',
+          text: 'Por favor, cambia a la red Hardhat Local (chainId 31337) en MetaMask.',
+        });
         return;
       }
 
       const tx = await votingService.vote(electionId, candidateId);
       await tx.wait();
 
-      alert("✅ Voto registrado con éxito!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Voto registrado',
+        text: 'Tu voto ha sido registrado con éxito.',
+      });
 
       await handleLoadElections();
       await loadCandidates(electionId);
     } catch (error) {
-      console.error("Error al votar:", error);
-      alert("Error al votar: " + error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al votar',
+        text: `Hubo un error al emitir tu voto: ${error.message}`,
+      });
     }
   }
   const [contractTimestamp, setContractTimestamp] = useState(null);
@@ -306,12 +354,19 @@ export default function Page() {
 
         await handleLoadElections();
       } catch (error) {
-        console.error("Error detallado:", error);
-        alert("Error al conectar wallet: " + error.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error al conectar wallet',
+          text: error.message,
+        });
         disconnectWallet();
       }
     } else {
-      alert("Por favor instala MetaMask");
+      Swal.fire({
+        icon: 'warning',
+        title: 'MetaMask no detectado',
+        text: 'Por favor instala MetaMask para continuar.',
+      });
     }
   };
 

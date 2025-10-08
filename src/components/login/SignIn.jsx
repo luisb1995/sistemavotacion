@@ -1,6 +1,7 @@
 "use client";
 import { useForm } from "react-hook-form";
 import signinSupabase from "@/helpers/signinSupabase";
+import Swal from "sweetalert2";
 import Link from "next/link";
 import { useRouter, redirect } from "next/navigation";
 
@@ -11,16 +12,24 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     console.log(data);
-    // Aquí más adelante conectamos con Supabase o API
+
     const { email, password } = data;
     const { success, error, user, role } = await signinSupabase(email, password);
     if (!success) {
-      alert(error);
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error,
+      });
       return;
     }
 
-    alert("✅ Sesión iniciada con éxito");
-    
+    Swal.fire({
+      title: "Buen trabajo!",
+      text: "Sesión iniciada con éxito",
+      icon: "success"
+    });
+
     redirect('/dashboard');
 
   };

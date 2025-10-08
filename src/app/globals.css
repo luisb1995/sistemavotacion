@@ -66,3 +66,14 @@
     @apply bg-background text-foreground;
   }
 }
+
+.swal2-confirm {
+  background-color: #3085d6 !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.swal2-confirm:hover {
+  background-color: #2563eb !important; /* azul más oscuro */
+}

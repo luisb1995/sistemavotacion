@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useGetUser } from '@/hooks/useGetUser';
 import { supabase } from '@/lib/supabaseCliente';
 import { redirect } from 'next/navigation';
+import Swal from 'sweetalert2';
 
 
 export default function layout({ children }) {
@@ -12,6 +13,10 @@ export default function layout({ children }) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
+        Swal.fire({
+            icon: 'success',
+            title: 'Sesión cerrada'
+          });
         redirect('/iniciarsesion');
     };
 

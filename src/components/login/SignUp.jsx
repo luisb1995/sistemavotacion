@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import signupSupabase from "@/helpers/signupSupabase";
+import Swal from "sweetalert2";
 
 export default function SignupPage() {
 
@@ -14,16 +15,18 @@ export default function SignupPage() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      alert("Las contraseñas no coinciden");
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Las contraseñas no coinciden",
+      });
+      
       return;
     }
     setIsLoading(true);
 
     const {loading , message , err } = await signupSupabase(name, email, password, role);
-    setIsLoading(loading);
-   
-    console.log(loading , message , err );  
-    
+    setIsLoading(loading);    
     
   }
 
