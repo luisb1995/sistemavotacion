@@ -1,6 +1,7 @@
 "use client";
 import { useForm } from "react-hook-form";
 import signinSupabase from "@/helpers/signinSupabase";
+import { supabase } from "@/lib/supabaseCliente";
 import Swal from "sweetalert2";
 import Link from "next/link";
 import { useRouter, redirect } from "next/navigation";
@@ -32,6 +33,41 @@ export default function LoginPage() {
 
     redirect('/dashboard');
 
+  };
+
+  const handleResetPassword = async () => {
+    const { value: email } = await Swal.fire({
+      title: "Restablecer contraseña",
+      input: "email",
+      inputLabel: "Introduce tu correo electrónico",
+      inputPlaceholder: "tuemail@ejemplo.com",
+      showCancelButton: true,
+      confirmButtonText: "Enviar enlace",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) return "Por favor ingresa un correo válido";
+      },
+    });
+
+    if (email) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/actualizar-password`,
+      });
+
+      if (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.message,
+        });
+      } else {
+        Swal.fire({
+          icon: "success",
+          title: "Correo enviado",
+          text: "Revisa tu bandeja para restablecer tu contraseña.",
+        });
+      }
+    }
   };
 
   return (
@@ -70,6 +106,14 @@ export default function LoginPage() {
           </div>
 
           {/* Botón */}
+          <p>
+            <button
+              onClick={handleResetPassword}
+              className="text-blue-600 hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </p>
           <button
             type="submit"
             className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition"
@@ -79,6 +123,8 @@ export default function LoginPage() {
         </form>
 
         {/* Enlaces extras */}
+
+
         <p className="mt-6 text-center text-gray-600">
           ¿No tienes cuenta?{" "}
           <Link href="/registrarse" className="text-blue-600 hover:underline">

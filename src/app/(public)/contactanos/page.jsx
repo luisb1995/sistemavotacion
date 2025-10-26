@@ -1,8 +1,44 @@
+"use client"
 import React from 'react'
+import emailjs from '@emailjs/browser'
+import Swal from 'sweetalert2';
+import { useRef, useState } from 'react';
 
 export default function page() {
+  const form = useRef();
+  const [status, setStatus] = useState("");
+
+  const sendEmail = (e) => {
+   
+    e.preventDefault();
+    setStatus("Enviando...");
+
+    emailjs
+      .sendForm(process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID, 
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, form.current, {
+        publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY,
+      })
+      .then(
+        () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Mensaje enviado',
+            text: 'Gracias por contactarnos. Te responderemos pronto.',
+          });
+          form.current.reset();
+        },
+        (error) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al enviar el mensaje',
+            text: 'Por favor, intenta nuevamente más tarde.',
+          });
+          setStatus("");
+        },
+      );
+  };
   return (
-    <section id="contacto" className="w-full py-20 bg-gray-100/60 backdrop-blur-sm ">
+   <section id="contacto" className="w-full py-20 bg-gray-100/60 backdrop-blur-sm">
       <section className="max-w-4xl mx-auto text-center">
         <h2 className="text-4xl font-bold text-gray-800 mb-6">Contáctanos</h2>
         <p className="text-lg text-gray-900 mb-12">
@@ -10,15 +46,15 @@ export default function page() {
           no dudes en escribirnos. Estamos aquí para ayudarte.
         </p>
 
-        <form className="grid grid-cols-1 gap-6 bg-white p-8 
-                         rounded-2xl shadow-lg text-left">
+        <form ref={form} onSubmit={sendEmail} className="grid grid-cols-1 gap-6 bg-white p-8 rounded-2xl shadow-lg text-left">
           <section>
             <label className="block text-gray-700 font-semibold mb-2">Nombre</label>
             <input
               type="text"
+              name="user_name"
               placeholder="Tu nombre completo"
-              className="w-full border border-gray-300 p-3 rounded-lg 
-              focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </section>
 
@@ -26,17 +62,20 @@ export default function page() {
             <label className="block text-gray-700 font-semibold mb-2">Correo</label>
             <input
               type="email"
+              name="user_email"
               placeholder="tuemail@ejemplo.com"
-              className="w-full border border-gray-300 p-3 rounded-lg 
-                focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </section>
 
           <section>
             <label className="block text-gray-700 font-semibold mb-2">Mensaje</label>
             <textarea
+              name="message"
               rows="5"
               placeholder="Escribe tu mensaje..."
+              required
               className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             ></textarea>
           </section>
@@ -47,6 +86,8 @@ export default function page() {
           >
             Enviar mensaje
           </button>
+
+          {status && <p className="text-center mt-4 text-gray-700">{status}</p>}
         </form>
       </section>
     </section>
