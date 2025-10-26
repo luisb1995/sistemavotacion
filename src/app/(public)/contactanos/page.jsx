@@ -6,15 +6,15 @@ import { useRef, useState } from 'react';
 
 export default function page() {
   const form = useRef();
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(false);
 
   const sendEmail = (e) => {
-   
+
     e.preventDefault();
-    setStatus("Enviando...");
+    setStatus(true);
 
     emailjs
-      .sendForm(process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID, 
+      .sendForm(process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID,
         process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, form.current, {
         publicKey: process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY,
       })
@@ -26,6 +26,7 @@ export default function page() {
             text: 'Gracias por contactarnos. Te responderemos pronto.',
           });
           form.current.reset();
+          setStatus(false);
         },
         (error) => {
           Swal.fire({
@@ -33,12 +34,12 @@ export default function page() {
             title: 'Error al enviar el mensaje',
             text: 'Por favor, intenta nuevamente más tarde.',
           });
-          setStatus("");
+          setStatus(false);
         },
       );
   };
   return (
-   <section id="contacto" className="w-full py-20 bg-gray-100/60 backdrop-blur-sm">
+    <section id="contacto" className="w-full py-20 bg-gray-100/60 backdrop-blur-sm">
       <section className="max-w-4xl mx-auto text-center">
         <h2 className="text-4xl font-bold text-gray-800 mb-6">Contáctanos</h2>
         <p className="text-lg text-gray-900 mb-12">
@@ -82,12 +83,16 @@ export default function page() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition"
+            disabled={status}
+            className={`w-full py-3 rounded-lg font-bold transition ${status
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
           >
-            Enviar mensaje
+            {status ? "Enviando..." : "Enviar mensaje"}
           </button>
 
-          {status && <p className="text-center mt-4 text-gray-700">{status}</p>}
+
         </form>
       </section>
     </section>
