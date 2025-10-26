@@ -28,6 +28,7 @@ export default function VotacionesPage() {
 
     // 🔹 Conectar wallet
     const connectWallet = async () => {
+
         if (!window.ethereum) {
             alert("Instala MetaMask");
             return;
@@ -42,6 +43,7 @@ export default function VotacionesPage() {
             console.error("Error al conectar wallet:", err);
         }
     };
+    
     useEffect(() => {
         const checkWallet = async () => {
             if (!window.ethereum) return;
