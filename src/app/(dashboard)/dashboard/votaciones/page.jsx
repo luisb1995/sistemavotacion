@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { loadElections } from "@/helpers/loadElections";
 import { votingService } from "@/lib/servicevoting";
+import Swal from "sweetalert2";
 
 export default function VotacionesPage() {
     const [walletAddress, setWalletAddress] = useState("");
@@ -43,7 +44,7 @@ export default function VotacionesPage() {
             console.error("Error al conectar wallet:", err);
         }
     };
-    
+
     useEffect(() => {
         const checkWallet = async () => {
             if (!window.ethereum) return;
@@ -84,16 +85,12 @@ export default function VotacionesPage() {
         fetchElections();
     }, [walletAddress]);
 
-    // 🔹 Emitir voto
-    const handleVote = async (electionId, candidateId) => {
-        if (!walletAddress) {
-            alert("Conecta tu wallet antes de votar.");
-            return;
-        }
+    // 🔹 Actualizar elecciones automáticamente cada 30 segundos
+    useEffect(() => {
+        if (!walletAddress) return;
 
-        try {
-            await votingService.vote(electionId, candidateId);
-            alert("✅ Voto emitido correctamente!");
+        const interval = setInterval(async () => {
+            console.log("⏱️ Actualizando elecciones automáticamente...");
             await loadElections({
                 votingService,
                 walletAddress,
@@ -101,11 +98,53 @@ export default function VotacionesPage() {
                 setElections,
                 loadCandidates,
             });
+        }, 30000); // cada 30 segundos
+
+        // 🧹 Limpiar intervalo al desmontar
+        return () => clearInterval(interval);
+    }, [walletAddress]);
+
+    // 🔹 Emitir voto
+    const handleVote = async (electionId, candidateId) => {
+        if (!walletAddress) {
+            Swal.fire({
+                icon: "warning",
+                title: "Wallet no conectada",
+                text: "Por favor, conecta tu wallet para emitir un voto.",
+            });
+            return;
+        }
+
+        try {
+            const tx = await votingService.vote(electionId, candidateId);
+            await tx.wait(); // 👈 esto asegura que la transacción esté confirmada
+
+            Swal.fire({
+                icon: "success",
+                title: "Voto registrado",
+                text: "Tu voto ha sido registrado con éxito.",
+            });
+
+            // 🔁 Refrescar todo de inmediato 
+            await loadElections({
+                votingService,
+                walletAddress,
+                pathname: "/dashboard/votaciones",
+                setElections,
+                loadCandidates,
+            });
+
+            await loadCandidates(electionId);
         } catch (error) {
             console.error("Error al votar:", error);
-            alert("❌ No se pudo emitir el voto.");
+            Swal.fire({
+                icon: "error",
+                title: "Error al votar",
+                text: `No se pudo emitir tu voto: ${error.message}`,
+            });
         }
     };
+
 
     return (
         <div className="flex flex-col w-full justify-center align-middle items-center justify-items-center  text-center">
@@ -135,13 +174,58 @@ export default function VotacionesPage() {
                             <strong>{election.remainingMinutes} min</strong>
                         </p>
 
-                        {election.winner ? (
-                            <p className="mt-2 text-green-600 font-semibold">
-                                🏆 Ganador: {election.winner.name} ({election.winner.votes} votos)
-                            </p>
+                        {election.remainingMinutes <= 0 ? (
+                            // ✅ Votación finalizada → mostrar resultados finales
+                            <div className="mt-2 text-center">
+                                <span className="font-bold">Resultados finales:</span>
+                                {candidates[election.id]?.length > 0 ? (
+                                    <div className="mt-2">
+                                        {candidates[election.id]
+                                            .sort((a, b) => b.voteCount - a.voteCount)
+                                            .map((candidate) => (
+                                                <div
+                                                    key={candidate.id}
+                                                    className={`block w-full text-center border rounded-xl p-3 mb-2 ${election.winner &&
+                                                        candidate.name === election.winner.name
+                                                        ? "bg-green-100 font-bold"
+                                                        : "bg-gray-100"
+                                                        }`}
+                                                >
+                                                    {candidate.name} —{" "}
+                                                    <strong>{candidate.voteCount} votos</strong>
+                                                </div>
+                                            ))}
+
+                                        {(() => {
+                                            const list = candidates[election.id];
+                                            if (!list || list.length === 0) return null;
+
+                                            const maxVotes = Math.max(...list.map((c) => c.voteCount));
+                                            const topCandidates = list.filter((c) => c.voteCount === maxVotes);
+
+                                            if (topCandidates.length > 1) {
+                                                return (
+                                                    <p className="mt-4 text-yellow-600 font-semibold">
+                                                        🤝 Empate entre {topCandidates.map((c) => c.name).join(" y ")} ({maxVotes} votos)
+                                                    </p>
+                                                );
+                                            } else {
+                                                return (
+                                                    <p className="mt-4 text-green-600 font-semibold">
+                                                        🏆 Ganador: {topCandidates[0].name} ({topCandidates[0].voteCount} votos)
+                                                    </p>
+                                                );
+                                            }
+                                        })()}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 mt-2">Sin candidatos registrados</p>
+                                )}
+                            </div>
                         ) : (
-                            <div className=" w-full mt-4 text-center">
-                                <span className="font-bold">Candidatos: </span>
+                            // ✅ Si la votación sigue activa → mostrar candidatos para votar
+                            <div className="w-full mt-4 text-center">
+                                <span className="font-bold">Candidatos:</span>
                                 {candidates[election.id]?.length > 0 ? (
                                     candidates[election.id].map((candidate) => (
                                         <button
@@ -156,7 +240,7 @@ export default function VotacionesPage() {
                                             {candidate.name}
                                             <br />
                                             <span className="font-normal text-gray-600">
-                                                {candidate.description} -{" "}
+                                                {candidate.description} —{" "}
                                                 <strong>{candidate.voteCount} votos</strong>
                                             </span>
                                         </button>

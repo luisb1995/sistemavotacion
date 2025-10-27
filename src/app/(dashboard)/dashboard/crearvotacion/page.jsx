@@ -4,7 +4,7 @@ import { useGetUser } from "@/hooks/useGetUser";
 import { useState, useEffect } from "react";
 import { usePathname } from 'next/navigation';
 import { votingService } from '@/lib/servicevoting';
-import {loadElections } from '@/helpers/loadElections';
+import { loadElections } from '@/helpers/loadElections';
 import Swal from 'sweetalert2';
 
 export default function Page() {
@@ -287,7 +287,7 @@ export default function Page() {
   //     );
 
   //   const filteredElections = formattedElections.filter(Boolean);
-      
+
   //     // Aplicar filtro solo en /crearvotacion
   //     const myElections =
   //       pathname === '/dashboard/crearvotacion'
@@ -327,9 +327,12 @@ export default function Page() {
       }));
     }
   };
+
+
   const handleLoadElections = async () => {
-  await loadElections({votingService,walletAddress,pathname,setElections,loadCandidates});
-};
+
+    await loadElections({ votingService, walletAddress, pathname, setElections, loadCandidates });
+  };
 
   // 🔹 Wallet
   const connectWallet = async () => {
@@ -346,7 +349,7 @@ export default function Page() {
           if (newAccounts.length > 0) {
             setWalletAddress(newAccounts[0]);
             localStorage.setItem("walletAddress", newAccounts[0]);
-           handleLoadElections();
+            handleLoadElections();
           } else {
             disconnectWallet();
           }
@@ -382,21 +385,21 @@ export default function Page() {
     setNewCandidate({ name: '', description: '' });
   };
 
-useEffect(() => {
-  const storedWallet = localStorage.getItem("walletAddress");
-  if (storedWallet) {
-    setWalletAddress(storedWallet);
-    handleLoadElections(); // ✅ carga inicial
-  }
+  useEffect(() => {
+    const storedWallet = localStorage.getItem("walletAddress");
+    if (storedWallet) {
+      setWalletAddress(storedWallet);
+      handleLoadElections(); // ✅ carga inicial
+    }
 
-  // ⏱️ Refrescar automáticamente cada 30 segundos
-  const interval = setInterval(() => {
-    handleLoadElections(); // ✅ usar la función que ya tiene los argumentos
-  }, 30000);
+    // ⏱️ Refrescar automáticamente cada 30 segundos
+    const interval = setInterval(() => {
+      handleLoadElections(); // ✅ usar la función que ya tiene los argumentos
+    }, 30000);
 
-  // 🧹 Limpiar el intervalo al desmontar el componente
-  return () => clearInterval(interval);
-}, [walletAddress, votingService, pathname]);
+    // 🧹 Limpiar el intervalo al desmontar el componente
+    return () => clearInterval(interval);
+  }, [walletAddress, votingService, pathname]);
 
   return (
     <section className="flex w-full items-center justify-center min-h-screen">
@@ -549,11 +552,31 @@ useEffect(() => {
                           </div>
                         ))}
 
-                        {!election.isActive && election.winner && (
-                          <div className="mt-3 p-3 bg-yellow-100 border border-yellow-300 rounded text-center">
-                            🏆 <strong>Ganador:</strong> {election.winner.name}{" "}
-                            <span className="text-sm text-gray-600">({election.winner.votes} votos)</span>
-                          </div>
+                        {!election.isActive && Array.isArray(candidates[election.id]) && candidates[election.id].length > 0 && (
+                          (() => {
+                            const maxVotes = Math.max(...candidates[election.id].map((c) => c.voteCount));
+                            const empate = candidates[election.id].filter((c) => c.voteCount === maxVotes);
+
+                            if (empate.length > 1) {
+                              return (
+                                <p className="mt-4 text-red-600 font-bold text-center">
+                                  ⚖️ Empate entre {empate.map((c) => c.name).join(' y ')} ({maxVotes} votos)
+                                </p>
+                              );
+                            } else if (election.winner) {
+                              return (
+                                <p className="mt-4 text-green-700 font-bold text-center">
+                                  🏆 Ganador: {election.winner.name} ({election.winner.votes} votos)
+                                </p>
+                              );
+                            } else {
+                              return (
+                                <p className="mt-4 text-gray-600 italic text-center">
+                                  No hay ganador disponible
+                                </p>
+                              );
+                            }
+                          })()
                         )}
 
 
