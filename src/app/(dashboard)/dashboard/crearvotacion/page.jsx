@@ -111,7 +111,12 @@ export default function Page() {
       setInitialCandidates([{ name: '', description: '' }, { name: '', description: '' }]);
       setNewElection({ title: '', description: '', tiempo: '' });
 
+      // 🔹 Esperar un poco antes de recargar (importante)
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // 🔹 Recargar elecciones del contrato
       await handleLoadElections();
+      
     } catch (error) {
       Swal.fire({
         icon: 'error',
